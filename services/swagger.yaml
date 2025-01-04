@@ -1,0 +1,851 @@
+openapi: 3.0.0
+info:
+  title: KittiSalt API
+  description: API documentation for KittiSalt application
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://ae8b-158-108-231-163.ngrok-free.app
+    description: Ngrok server
+
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Basic endpoint to check if server is running
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "request success"
+
+  /main-product:
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      description: Retrieve a list of all products ordered by ID in descending order
+      responses:
+        "200":
+          description: List of products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      tags:
+        - Products
+      summary: Add new product
+      description: Add a new product with image upload
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - id
+                - name
+                - price
+                - quantity
+                - image
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                price:
+                  type: number
+                quantity:
+                  type: integer
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Product added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                  product:
+                    $ref: "#/components/schemas/Product"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /main-product/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID or search products
+      description: Either retrieve a specific product by its ID or search products by ID/name
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Product ID or search term
+      responses:
+        "200":
+          description: Product(s) retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  - $ref: "#/components/schemas/Product"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    put:
+      tags:
+        - Products
+      summary: Update product
+      description: Update an existing product's details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Product ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                quantity:
+                  type: integer
+                description:
+                  type: string
+      responses:
+        "201":
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+    delete:
+      tags:
+        - Products
+      summary: Delete product
+      description: Delete a product by its ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Product ID
+      responses:
+        "204":
+          description: Product deleted successfully
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /register:
+    post:
+      tags:
+        - User Authentication
+      summary: Register new user
+      description: Register a new user with required details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - password
+                - phone
+                - userName
+                - email
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                password:
+                  type: string
+                phone:
+                  type: string
+                userName:
+                  type: string
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Registration response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registerMessage:
+                    type: string
+                    enum: [success, fail]
+
+  /admin/register:
+    post:
+      tags:
+        - Admin Authentication
+      summary: Register new admin
+      description: Register a new administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - firstName
+                - lastName
+                - password
+                - userName
+              properties:
+                id:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                password:
+                  type: string
+                userName:
+                  type: string
+      responses:
+        "200":
+          description: Admin registration response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registerMessage:
+                    type: string
+                    enum: [success, fail]
+
+  /login:
+    post:
+      tags:
+        - User Authentication
+      summary: User login
+      description: Login with email/username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  description: Can be either email or username
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loginMessage:
+                    type: string
+                    enum: [success, fail]
+                  user:
+                    $ref: "#/components/schemas/UserSession"
+
+  /login/admin:
+    post:
+      tags:
+        - Admin Authentication
+      summary: Admin login
+      description: Login as administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userName
+                - password
+              properties:
+                userName:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Admin login response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loginMessage:
+                    type: string
+                    enum: [success, fail]
+                  userName:
+                    $ref: "#/components/schemas/AdminSession"
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: User/Admin logout
+      description: Logout current user/admin and clear session
+      responses:
+        "200":
+          description: Logout response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logoutMessage:
+                    type: string
+                    enum: [success, fail]
+
+  /session/user:
+    get:
+      tags:
+        - User Authentication
+      summary: Get user session
+      description: Retrieve current user session information
+      responses:
+        "200":
+          description: Session information
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      msg:
+                        type: string
+                        example: "Auth fail"
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/UserSession"
+
+  /session/admin:
+    get:
+      tags:
+        - Admin Authentication
+      summary: Get admin session
+      description: Retrieve current admin session information
+      responses:
+        "200":
+          description: Admin session information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    $ref: "#/components/schemas/AdminSession"
+    post:
+      tags:
+        - Admin
+      summary: Register new admin
+      description: Register a new administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - firstName
+                - lastName
+                - password
+                - userName
+              properties:
+                id:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                password:
+                  type: string
+                userName:
+                  type: string
+      responses:
+        "200":
+          description: Admin registration response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registerMessage:
+                    type: string
+                    enum: [success, fail]
+
+  /check-cart:
+    get:
+      tags:
+        - Shopping Cart
+      summary: Check cart session
+      description: Retrieve current cart session information
+      responses:
+        "200":
+          description: Cart session information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /add-item-to-cart:
+    post:
+      tags:
+        - Shopping Cart
+      summary: Add item to cart
+      description: Add a product to the shopping cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Item added to cart successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /update-item-in-cart/{id}:
+    put:
+      tags:
+        - Shopping Cart
+      summary: Update cart item
+      description: Update quantity of an item in the cart
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Cart item ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Cart item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /delete-item-from-cart/{id}:
+    delete:
+      tags:
+        - Shopping Cart
+      summary: Delete cart item
+      description: Remove an item from the cart
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Cart item ID
+      responses:
+        "204":
+          description: Item removed successfully
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /show-item-in-cart/{id}:
+    get:
+      tags:
+        - Shopping Cart
+      summary: Show cart item
+      description: Get details of a specific item in the cart
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Cart item ID
+      responses:
+        "200":
+          description: Cart item details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /order-checkout:
+    post:
+      tags:
+        - Orders
+      summary: Checkout order
+      description: Process cart checkout and create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - shippingAddress
+              properties:
+                userId:
+                  type: string
+                shippingAddress:
+                  type: string
+                paymentMethod:
+                  type: string
+      responses:
+        "200":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Checkout failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /show-order-history/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Show order history
+      description: Get order history for a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        "200":
+          description: Order history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "404":
+          description: No orders found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: integer
+        description:
+          type: string
+        image:
+          type: string
+          description: Filename of the uploaded image
+
+    UserSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        userName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+
+    AdminSession:
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        userName:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+          format: password
+
+    Admin:
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+          format: password
+
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        totalAmount:
+          type: number
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        subtotal:
+          type: number
+        product:
+          $ref: "#/components/schemas/Product"
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        totalAmount:
+          type: number
+        shippingAddress:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, shipped, delivered]
+        createdAt:
+          type: string
+          format: date-time
+        paymentStatus:
+          type: string
+          enum: [pending, completed, failed]
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+
+tags:
+  - name: Products
+    description: Product management endpoints
+  - name: User Authentication
+    description: User authentication endpoints
+  - name: Admin Authentication
+    description: Administrator authentication endpoints
+  - name: Authentication
+    description: Common authentication endpoints
+  - name: Shopping Cart
+    description: Shopping cart management endpoints
+  - name: Orders
+    description: Order processing and history endpoints
+
+security:
+  - sessionAuth: []
